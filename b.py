@@ -4,7 +4,7 @@ import random
 from dspy import InputField, OutputField, Signature
 from problem import Problem
 from vor import Desc2PlanGenerator, UpdatePlan, Reason2CodeGenerator, Pseudo2GuidelineGenerator, SummarizeGuideline, Plan2TimeComplexityGuidelineGenerator, Plan2AlternativeSolutionsGenerator, Plan2PseudoCodeGenerator, Plan2MistakesGenerator, Plan2InvariantsGenerator, ExpandDesc
-
+from vor2 import ReviseCode
 # Configure logging with random colors
 def get_random_color():
     return random.choice(['\033[91m', '\033[92m', '\033[93m', '\033[94m', '\033[95m', '\033[96m'])
@@ -216,4 +216,18 @@ if __name__ == "__main__":
     logger.info(f"Generated C++ program: {response.cpp_program}")
     score, failed_testcases = problem.test_code(response.cpp_program)
     logger.info(f"Test results - Score: {score}, Failed testcases: {failed_testcases}")
+    code = response.cpp_program
+    revisecode = ReviseCode()
+    for _ in range(5):
+        code = revisecode(plan=plan,
+            broken_code=code,
+            error=failed_testcases,
+            input_output_format=problem.desc.split("Constraints")[1])
+        # print(code)
+        logger.info(f"Generated C++ program: {code}")
+        score, failed_testcases = problem.test_code(code)
+        guidelines = failed_testcases
+        logger.info(f"Test results - Score: {score}, Failed testcases: {failed_testcases}")
+        if score == 1.0:
+            exit(0)
 
